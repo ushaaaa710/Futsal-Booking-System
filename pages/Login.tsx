@@ -8,7 +8,6 @@ import { Trophy, AlertCircle } from 'lucide-react';
 const Login = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isAdminLogin, setIsAdminLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -63,8 +62,6 @@ const Login = () => {
             label="Password" 
             type="password" 
             placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             required
           />
 
