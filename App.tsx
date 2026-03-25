@@ -16,7 +16,8 @@ import Landing from './pages/Landing';
 // --- Auth Context ---
 interface AuthContextType {
   user: User | null;
-  login: (email: string, role?: UserRole) => void;
+  login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -44,6 +45,7 @@ const ProtectedRoute = ({ children, roleRequired }: { children: React.ReactNode,
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [registeredUsers, setRegisteredUsers] = useState<Map<string, { name: string; email: string; password: string }>>(new Map());
 
   // Simulate persistent login checking
   useEffect(() => {
@@ -51,11 +53,76 @@ const App: React.FC = () => {
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+    const storedUsers = localStorage.getItem('courtsync_users');
+    if (storedUsers) {
+      setRegisteredUsers(new Map(JSON.parse(storedUsers)));
+    }
   }, []);
 
-  const login = (email: string, role: UserRole = UserRole.USER) => {
-    // Mock login logic
-    const userData = role === UserRole.ADMIN ? MOCK_ADMIN : { ...MOCK_USER, email };
+  const register = async (name: string, email: string, password: string) => {
+    // Validate input
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      throw new Error('All fields are required');
+    }
+    if (password.length < 6) {
+      throw new Error('Password must be at least 6 characters');
+    }
+
+    // Check if user already exists
+    const userKey = email.toLowerCase();
+    if (registeredUsers.has(userKey)) {
+      throw new Error('User already registered with this email');
+    }
+
+    // Register user
+    const newUser = { name, email, password };
+    const updatedUsers = new Map(registeredUsers);
+    updatedUsers.set(userKey, newUser);
+    setRegisteredUsers(updatedUsers);
+    localStorage.setItem('courtsync_users', JSON.stringify(Array.from(updatedUsers.entries())));
+
+    // Auto-login after registration
+    const userData: User = {
+      id: `u_${Date.now()}`,
+      name,
+      email,
+      phone: '',
+      role: UserRole.USER,
+      walletBalance: 0,
+      avatar: `https://ui-avatars.com/api/?name=${name}&background=00d4ff&color=000`
+    };
+    setUser(userData);
+    localStorage.setItem('courtsync_user', JSON.stringify(userData));
+  };
+
+  const login = async (email: string, password: string) => {
+    // Validate input
+    if (!email.trim() || !password.trim()) {
+      throw new Error('Email and password are required');
+    }
+
+    // Check if user exists
+    const userKey = email.toLowerCase();
+    const registeredUser = registeredUsers.get(userKey);
+
+    if (!registeredUser) {
+      throw new Error('User not found. Please register first');
+    }
+
+    if (registeredUser.password !== password) {
+      throw new Error('Invalid password');
+    }
+
+    // Login successful
+    const userData: User = {
+      id: `u_${userKey}`,
+      name: registeredUser.name,
+      email: registeredUser.email,
+      phone: '',
+      role: UserRole.USER,
+      walletBalance: 0,
+      avatar: `https://ui-avatars.com/api/?name=${registeredUser.name}&background=00d4ff&color=000`
+    };
     setUser(userData);
     localStorage.setItem('courtsync_user', JSON.stringify(userData));
   };
@@ -66,7 +133,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: !!user }}>
       <HashRouter>
         <AppRoutes />
       </HashRouter>
