@@ -6,10 +6,10 @@ import { Button, Input, Card } from '../components/ui/Components';
 import { Trophy, AlertCircle } from 'lucide-react';
 
 const Login = () => {
-  const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [isAdminLogin, setIsAdminLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,13 +18,25 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    login(email, isAdminLogin ? UserRole.ADMIN : UserRole.USER);
-    navigate(isAdminLogin ? '/admin' : '/dashboard');
-    setIsLoading(false);
+    setError('');
+
+    try {
+      if (!email.trim()) {
+        setError('Please enter a valid email');
+        setIsLoading(false);
+        return;
+      }
+
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      login(email, isAdminLogin ? UserRole.ADMIN : UserRole.USER);
+      navigate(isAdminLogin ? '/admin' : '/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Authentication failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -37,7 +49,7 @@ const Login = () => {
         <div className="text-center mb-8">
           <Trophy className="w-12 h-12 text-primary mx-auto mb-4" />
           <h2 className="text-3xl font-bold uppercase tracking-tight text-white">
-            {isRegister ? 'Join the Squad' : 'Welcome Back'}
+            Welcome Back
           </h2>
           <p className="text-gray-400 mt-2">Sign in to book the best courts in Nepal.</p>
         </div>
@@ -49,48 +61,41 @@ const Login = () => {
           </div>
         )}
 
+        {error && (
+          <div className="mb-6 p-3 bg-red-900/30 border border-red-700/50 flex items-center justify-center text-red-400 text-sm font-bold uppercase tracking-wide">
+            <AlertCircle size={16} className="mr-2" />
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input 
             label="Email Address" 
             type="email" 
-            placeholder="aarav@courtsync.np"
+            placeholder="name@courtsync.np"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <Input 
-            label="Password" 
-            type="password" 
-            placeholder="••••••••"
-            required
-          />
 
-          {!isRegister && (
-             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
-                id="admin" 
-                className="w-4 h-4 rounded-none border-neutral-600 bg-neutral-800 text-primary focus:ring-primary"
-                checked={isAdminLogin}
-                onChange={(e) => setIsAdminLogin(e.target.checked)}
-              />
-              <label htmlFor="admin" className="text-sm text-gray-400 select-none cursor-pointer">Login as Admin (Demo)</label>
-             </div>
-          )}
+          <div className="flex items-center space-x-2">
+            <input 
+              type="checkbox" 
+              id="admin" 
+              className="w-4 h-4 rounded-none border-neutral-600 bg-neutral-800 text-primary focus:ring-primary"
+              checked={isAdminLogin}
+              onChange={(e) => setIsAdminLogin(e.target.checked)}
+            />
+            <label htmlFor="admin" className="text-sm text-gray-400 select-none cursor-pointer">Login as Admin (Demo)</label>
+          </div>
 
           <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
-            {isRegister ? 'Create Account' : 'Sign In'}
+            Sign In
           </Button>
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-500">
-          {isRegister ? 'Already have an account?' : "Don't have an account?"} {' '}
-          <button 
-            onClick={() => setIsRegister(!isRegister)}
-            className="text-primary hover:text-primaryDark font-bold uppercase"
-          >
-            {isRegister ? 'Log In' : 'Register'}
-          </button>
+          Demo: Use any email to login
         </div>
       </Card>
     </div>
