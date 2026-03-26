@@ -16,7 +16,7 @@ import Landing from './pages/Landing';
 // --- Map API user to frontend User type ---
 function toFrontendUser(u: ApiUser): User {
   return {
-    id: u._id,
+    id: u._id, 
     name: u.name,
     email: u.email,
     phone: u.phone,
@@ -38,11 +38,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
+
+
 
 // --- Protected Route ---
 const ProtectedRoute = ({ children, roleRequired }: { children: React.ReactNode; roleRequired?: UserRole }) => {
