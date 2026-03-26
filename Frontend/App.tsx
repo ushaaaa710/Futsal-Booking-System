@@ -204,23 +204,3 @@ const AppRoutes = () => {
 };
 
 export default App;
-
-          <ProtectedRoute>
-            <Layout><ChatPage /></Layout>
-          </ProtectedRoute>
-        } />
-
-        {/* Admin Routes */}
-        <Route path="/admin" element={
-          <ProtectedRoute roleRequired={UserRole.ADMIN}>
-            <Layout><AdminDashboard /></Layout>
-          </ProtectedRoute>
-        } />
-
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </AnimatePresence>
-  );
-};
-
-export default App;
