@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { User, UserRole } from './types';
 import { authApi, ApiUser } from './services/api';
 import { Layout } from './components/Layout';
@@ -45,11 +45,11 @@ export const useAuth = () => {
 };
 
 // --- Protected Route ---
-const ProtectedRoute = ({ children, roleRequired }: { children: React.ReactNode, roleRequired?: UserRole }) => {
+const ProtectedRoute = ({ children, roleRequired }: { children: React.ReactNode; roleRequired?: UserRole }) => {
   const { user, isAuthenticated } = useAuth();
-  
+
   if (!isAuthenticated) return <Navigate to="/auth/login" replace />;
-  
+
   if (roleRequired && user?.role !== roleRequired) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -68,21 +68,23 @@ const App: React.FC = () => {
       // Optimistically restore, then verify token with backend
       const parsed = JSON.parse(storedUser);
       setUser(parsed);
-      authApi.getMe().then(({ user: apiUser }) => {
-        const fresh = toFrontendUser(apiUser);
-        setUser(fresh);
-        localStorage.setItem('courtsync_user', JSON.stringify(fresh));
-      }).catch(() => {
-        // Token expired or invalid — force re-login
-        setUser(null);
-        localStorage.removeItem('courtsync_user');
-        localStorage.removeItem('courtsync_token');
-      });
+      authApi
+        .getMe()
+        .then(({ user: apiUser }) => {
+          const fresh = toFrontendUser(apiUser);
+          setUser(fresh);
+          localStorage.setItem('courtsync_user', JSON.stringify(fresh));
+        })
+        .catch(() => {
+          // Token expired or invalid — force re-login
+          setUser(null);
+          localStorage.removeItem('courtsync_user');
+          localStorage.removeItem('courtsync_token');
+        });
     }
   }, []);
 
   const login = async (email: string, password: string, asAdmin?: boolean) => {
-    // Call real backend
     const { user: apiUser, token } = await authApi.login({ email, password });
     const frontendUser = toFrontendUser(apiUser);
     setUser(frontendUser);
@@ -130,29 +132,79 @@ const AppRoutes = () => {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Landing />} />
         <Route path="/auth/login" element={<Login />} />
-        
+
         {/* User Routes */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Layout><Dashboard /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/book" element={
-          <ProtectedRoute>
-            <Layout><BookingPage /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/bookings" element={
-          <ProtectedRoute>
-            <Layout><BookingsPage /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <Layout><ProfilePage /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/chat" element={
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Dashboard />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/book"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <BookingPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bookings"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <BookingsPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ProfilePage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ChatPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute roleRequired={UserRole.ADMIN}>
+              <Layout>
+                <AdminDashboard />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
+
+export default App;
+
           <ProtectedRoute>
             <Layout><ChatPage /></Layout>
           </ProtectedRoute>
